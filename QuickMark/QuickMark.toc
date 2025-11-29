@@ -1,0 +1,6 @@
+## Interface: 11502
+## Title: QuickMark (Raid Target Icons)
+## Notes: Self-target, mouse-over enemies to assign raid icons (skull → star). Hold SHIFT to clear.
+## Author: JacobHuber
+## Version: 1.1
+Core.lua

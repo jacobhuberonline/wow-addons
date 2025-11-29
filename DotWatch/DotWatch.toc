@@ -1,0 +1,12 @@
+## Interface: 11403
+## Title: DotWatch
+## Notes: Tracks your DoTs on your last targeted enemy
+## Version: 1.0.1
+
+constants/spells.lua
+constants/power_colors.lua
+ui/frame.lua
+core/tracker.lua
+core/playertracker.lua
+core/ui.lua
+DotWatch.lua

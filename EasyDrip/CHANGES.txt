@@ -1,0 +1,36 @@
+commit 0fe2c053244d8f4df36842fa1054ec24c84f3e37
+Author: cobmin <jacob-huber@outlook.com>
+Date:   Wed Aug 6 20:34:55 2025 -0500
+
+    bug removed
+
+commit 7efdaa1173cbca541df622c2d5670c90d59c4403
+Author: cobmin <jacob-huber@outlook.com>
+Date:   Wed Aug 6 20:06:28 2025 -0500
+
+    readme change
+
+commit 7429e361fd771b8d2049314e6c6acf438c849a2a
+Author: cobmin <jacob-huber@outlook.com>
+Date:   Wed Aug 6 20:03:42 2025 -0500
+
+    character specific now
+
+commit 98183fe1d4ac75fe32c3429b96d2895a4ee0ba4c
+Author: cobmin <jacob-huber@outlook.com>
+Date:   Wed Aug 6 18:25:16 2025 -0500
+
+    readme added
+
+commit c6e9ddcaa873b29a1a9cf0b597c14c975cdb2c07
+Author: cobmin <jacob-huber@outlook.com>
+Date:   Wed Aug 6 18:20:16 2025 -0500
+
+    Renamed addon to EasyDrip
+
+commit 68191afc9b6da3efdcb9973f5593e563fb53ac5f
+Author: cobmin <jacob-huber@outlook.com>
+Date:   Wed Aug 6 17:14:13 2025 -0500
+
+    first commit
+

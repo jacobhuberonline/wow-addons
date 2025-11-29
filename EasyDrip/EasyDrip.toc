@@ -1,0 +1,8 @@
+## Interface: 11505        
+## Title: EasyDrip
+## Notes: Lightweight gear set saver and switcher for WoW Classic. Supports macros.
+## Author: jacobhuberonline
+## Version: 1.0.0
+## SavedVariables: GearSaverDB
+
+EasyDrip.lua
