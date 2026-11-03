@@ -89,8 +89,7 @@ jobs:
       - name: Build and upload to CurseForge
         uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0
         with:
-          args: -c -p 1243353
+          args: -o -c -p 1243353
           pandoc: 'false'
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-
