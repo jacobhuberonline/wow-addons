@@ -43,6 +43,38 @@ jobs:
             - build_forever.py
           EOF
 
+      - name: Build without uploading
+        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0
+        with:
+          args: -d -p 1243353
+          pandoc: 'false'
+
+      - name: Verify addon ZIP layout
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          archives = list(Path('.release').glob('*.zip'))
+          assert archives, 'No package was built'
+          for path in archives:
+              with ZipFile(path) as package:
+                  names = package.namelist()
+                  assert 'DrinkWalkTimer/DrinkWalkTimer.toc' in names, names
+                  assert 'DrinkWalkTimer/DrinkWalkTimer.lua' in names, names
+                  assert all(name.startswith('DrinkWalkTimer/') for name in names), names
+                  assert not any('/' + addon + '/' in name for name in names for addon in ('DotWatch', 'EasyDrip', 'QuickMark')), names
+                  assert package.testzip() is None
+                  print(path, names)
+          PY
+
+      - name: Save downloadable packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: DrinkWalkTimer-${{ github.sha }}
+          path: .release/*.zip
+          if-no-files-found: error
+
       - name: Check publishing token
         shell: bash
         env:
@@ -56,14 +88,8 @@ jobs:
       - name: Build and upload to CurseForge
         uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0
         with:
-          args: -p 1243353
+          args: -c -p 1243353
           pandoc: 'false'
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
-      - name: Save downloadable packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: DrinkWalkTimer-${{ github.sha }}
-          path: .release/*.zip
-          if-no-files-found: error
