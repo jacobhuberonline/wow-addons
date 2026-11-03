@@ -1,8 +1,8 @@
-## Interface: 11507         
+## Interface: 16001, 11507
 ## Title: Drink Walk Timer
 ## Notes: Adaptive timer for perfect drink‑walking
 ## Author: JacobHuber
-## Version: 1.4           
+## Version: 1.6.0-beta.1
 ## SavedVariables: DWT_Settings
 ## IconTexture: Interface\Icons\INV_Drink_18
 
