@@ -74,6 +74,7 @@ jobs:
           name: DrinkWalkTimer-${{ github.sha }}
           path: .release/*.zip
           if-no-files-found: error
+          include-hidden-files: true
 
       - name: Check publishing token
         shell: bash
