@@ -16,10 +16,39 @@ local prevTickTime = nil
 local lastLabelText = ""
 local lastBarColor = ""
 
+-- Forever uses the modern aura API and can return restricted values.
+local function IsReadable(value)
+    return not issecretvalue or not issecretvalue(value)
+end
+
+local function ReadMana()
+    -- Do not query restricted combat power or carry combat samples into a drink.
+    if InCombatLockdown() or UnitAffectingCombat("player") or UnitIsDeadOrGhost("player") then
+        return nil
+    end
+    local mana = UnitPower("player", 0)
+    local maximum = UnitPowerMax("player", 0)
+    if not IsReadable(mana) or not IsReadable(maximum) then return nil end
+    if type(mana) ~= "number" or type(maximum) ~= "number" or maximum <= 0 then return nil end
+    return mana, maximum
+end
+
 local function IsDrinking()
+    if InCombatLockdown() or UnitAffectingCombat("player") then return false end
     for i = 1, 40 do
-        local name = UnitBuff("player", i)
-        if name and name:lower():find("drink") then
+        local name
+        if C_UnitAuras and C_UnitAuras.GetBuffDataByIndex then
+            local ok, aura = pcall(C_UnitAuras.GetBuffDataByIndex, "player", i)
+            if not ok or not IsReadable(aura) then return false end
+            if not aura then break end
+            if issecrettable and issecrettable(aura) then return false end
+            name = aura.name
+        elseif UnitBuff then
+            name = UnitBuff("player", i)
+        else
+            return false
+        end
+        if IsReadable(name) and type(name) == "string" and name:lower():find("drink", 1, true) then
             return true
         end
     end
@@ -46,6 +75,8 @@ if tickBar.SetResizable then
     tickBar:SetResizable(true)
     if tickBar.SetMinResize then
         tickBar:SetMinResize(100, 8)      -- only a minimum; no maximum
+    elseif tickBar.SetResizeBounds then
+        tickBar:SetResizeBounds(100, 8)
     end
 end
 tickBar:EnableMouse(true)
@@ -190,11 +221,8 @@ normalize:SetDuration(0.1)
 normalize:SetOrder(3)
 
 f:SetScript("OnUpdate", function(_, elapsed)
-    local currentMana = UnitPower("player", 0)
-    local maxMana = UnitPowerMax("player", 0)
-    local inCombat = UnitAffectingCombat("player")
-    local isDead = UnitIsDeadOrGhost("player")
-    if inCombat or isDead or (currentMana >= maxMana and not DWT_Settings.showAtFullMana) then
+    local currentMana, maxMana = ReadMana()
+    if not currentMana or (currentMana >= maxMana and not DWT_Settings.showAtFullMana) then
         tickBar:Hide()
         return
     end
@@ -242,9 +270,21 @@ end)
 f:RegisterEvent("PLAYER_LOGIN")
 f:RegisterEvent("UNIT_POWER_UPDATE")
 f:RegisterEvent("PLAYER_REGEN_ENABLED")   
+f:RegisterEvent("PLAYER_REGEN_DISABLED")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")   
 
-f:SetScript("OnEvent", function(_, event, arg)
+local function ResetTracking()
+    f.lastMana = nil
+    prevTickTime = nil
+    lastPassiveSync = 0
+    sampleWindow = {}
+    comboCount = 0
+    comboLabel:SetText("")
+    comboPulse:Stop()
+    lastTick = GetTime()
+end
+
+f:SetScript("OnEvent", function(_, event, arg, powerType)
     if event == "PLAYER_LOGIN" then
 
         if DWT_Settings.pos then
@@ -267,20 +307,23 @@ f:SetScript("OnEvent", function(_, event, arg)
             local width = tickBar:GetWidth()
             marker:SetPoint("LEFT", tickBar, "LEFT", width * 0.75, 0)
         end)
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        prevTickTime   = nil
-        lastPassiveSync = 0
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        lastPassiveSync = 0
-    elseif event == "UNIT_POWER_UPDATE" and arg == "player" then
-        local currentMana = UnitPower("player", 0)
+    elseif event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then
+        ResetTracking()
+        tickBar:Hide()
+    elseif event == "UNIT_POWER_UPDATE" and arg == "player" and powerType == "MANA" then
+        local currentMana, maxMana = ReadMana()
+        if not currentMana then
+            ResetTracking()
+            tickBar:Hide()
+            return
+        end
         local previousMana = f.lastMana or currentMana
         local drinking = IsDrinking()
         local now = GetTime()
         
         local gap = now - lastTick
 
-        if (not drinking) and currentMana < UnitPowerMax("player", 0) then
+        if (not drinking) and currentMana > previousMana and currentMana < maxMana then
             if gap >= tickInterval*0.9 and gap <= tickInterval*1.1 then
                 if now - lastPassiveSync > PASSIVE_COOLDOWN then
                     lastTick = now                
@@ -306,6 +349,7 @@ f:SetScript("OnEvent", function(_, event, arg)
                 local median = sorted[ math.ceil(#sorted / 2) ]
                 if math.abs(median - tickInterval) > 0.03 then
                     tickInterval = median
+                    tickBar:SetMinMaxValues(0, tickInterval)
                 end
             end
 
