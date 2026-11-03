@@ -1,0 +1,69 @@
+name: Publish DrinkWalkTimer
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'DrinkWalkTimer/**'
+      - '.github/workflows/drinkwalktimer.yml'
+    tags:
+      - 'dwt-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: drinkwalktimer-publish
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # This repository contains several independent addons.
+      - name: Configure DrinkWalkTimer package
+        shell: bash
+        run: |
+          cat > .pkgmeta <<'EOF'
+          package-as: DrinkWalkTimer
+          move-folders:
+            DrinkWalkTimer/DrinkWalkTimer: DrinkWalkTimer
+          ignore:
+            - DotWatch
+            - EasyDrip
+            - QuickMark
+            - .github
+            - .DS_Store
+            - tests
+            - dist
+            - build_forever.py
+          EOF
+
+      - name: Check publishing token
+        shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          if [ -z "$CF_API_TOKEN" ]; then
+            echo "::error::Add the CF_API_TOKEN repository secret to enable CurseForge uploads."
+            exit 1
+          fi
+
+      - name: Build and upload to CurseForge
+        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0
+        with:
+          args: -p 1243353
+          pandoc: 'false'
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Save downloadable packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: DrinkWalkTimer-${{ github.sha }}
+          path: .release/*.zip
+          if-no-files-found: error
